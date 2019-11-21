@@ -1,0 +1,113 @@
+groups:
+- name: nsdiag.rules
+  rules:
+  - alert: PRODUCTION IncomingDailyAsupsLow
+    expr: sum(incoming_daily_asups{environment="production",noderole="nsdiag"}) <
+      200
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      description: During normal operations we should more than 200 in-progress
+        daily autosupports.  Contact the network team to see if external connection
+        to nsdiag.nimblestorage.com is having problems.
+      summary: NSDIAG in-progress Daily autosupport total of {{ $value }} is too LOW.
+  - alert: PRODUCTION IncomingDailyAsupsHigh
+    expr: sum(incoming_daily_asups{environment="production",noderole="nsdiag"}) >
+      6000
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      description: During normal operations we should see less than 5000 in-progress
+        daily autosupports.  Investigate why we are seeing a greater than usual number
+        of autosupports.
+      summary: NSDIAG in-progress Daily autosupport total of {{ $value }} is too HIGH.
+  - alert: PRODUCTION IncomingStatsStreamAsupHigh
+    expr: sum(incoming_statsstream_asups{environment="production",noderole="nsdiag"})
+      > 40000
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      description: Statstreams are sent by the array every 10 minutes or so.  This
+        stat tracks the number of stats streams that are in-progress.  We should see
+        less than 40000 during normal operations.
+      summary: NSDIAG in-progress stats stream total of {{ $value }} is too HIGH.
+  - alert: PRODUCTION UnprocessedDmps
+    expr: sum(unprocessed_dmps{environment="production",noderole="nsdiag"}) > 10000
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      description: Statstreams are sent by the array every 10 minutes or so.  We should
+        see an incoming total of less than 10000 during normal operations.
+      summary: NSDIAG dmp files are too high {{ $value }}.
+  - alert: PRODUCTION HeartbeatsPer5Minutes
+    expr: heartbeats_per_5_minutes{environment="production"} < 3500
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: HEARTBEATS per 5 minutes is low {{ $value }}.  We should have more
+        than 3500 per nsdiag node.  Check the network, or load balancers.
+  - alert: PRODUCTION 3PAR_HourlyDeliveredArrayStats
+    expr: max_over_time(tpar_arrays_delivered_stats_hourly_total{environment="production"}[61m])
+      < 1000
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: 3Par autosupports for the hour is {{ $value }}.  We should have 8.
+- alert: PRODUCTION NFS Load
+    expr: label_replace(node_load1{instance=~"nas-asup.*"}, "instance", "$1", "instance", "(.*).lvs.nimblestorage.com:9100")
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      description: Load on the Nfs Server.
+      summary: 'Load on the NFS Server {{$labels.instance}} is too High.'
+- alert: PRODUCTION NFS Memory Usage
+    expr: label_replace(sort(100 - ((node_memory_Cached{environment='production', noderole='nfs'} + node_memory_Buffers{environment='production', noderole='nfs'} + node_memory_MemFree{environment='production', noderole='nfs'})) / node_memory_MemTotal{environment='production', noderole='nfs'} * 100), "instance", "$1", "instance", "(.*).lvs.nimblestorage.com:9100")
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      description: Memory Usage on the Nfs Server.
+      summary: 'Memory Usage on the NFS Server {{$labels.instance}} is too High.'
+- alert: PRODUCTION Redis Pod Down
+    expr: label_replace(pod_lookups_per_minute{environment="production",pod="na0"}, "instance", "$1", "instance", "(.*).lvs.nimblestorage.com:9100")
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      description: Status of the Redis Pod.
+      summary: 'Redis pod has down for {{value}} minutes'
+- alert: PRODUCTION Redis Pod Down
+    expr: label_replace(pod_lookups_per_minute{environment="production",pod="na0"}, "instance", "$1", "instance", "(.*).lvs.nimblestorage.com:9100")
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      description: Status of the Redis Pod.
+      summary: 'Count of the pod should be 6 Redis pod has down for {{value}} minutes'
+- alert: PRODUCTION KafkaAssupLow
+    expr: sum(asup_arrived_incoming_rate{environment="production"}) < -1.0
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      description: During normal operations we should see more than 0 in-progress
+        daily kafka assups. Contact the network team to see if external connection
+        to nsdiag.nimblestorage.com is having problems
+      summary: 'Kafka assup arrived total of {{ $value }} is too LOW'
+- alert: PRODUCTION KafkaAssupHigh
+    expr: sum(asup_arrived_incoming_rate{environment="production"}) > 2000
+    for: 10m
+    labels:
+      severity: critical
+    annotations:
+      description: During normal operations we should see less than 5 000 in-progress
+        daily kafka assups.Investigate why we are seeing a greater than usual number
+        of autosupports.
+      summary: 'Kafka assup arrived total of {{ $value }} is too LOW'

@@ -1,0 +1,536 @@
+# my global config
+global:
+  scrape_interval:     15s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 15s # By default, scrape targets every 15 seconds.
+  # scrape_timeout is set to the global default (10s).
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+      monitor: 'prometheus.lvs'
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  - 'alert.rules.yml'
+  - 'diskalerts.rules.yml'
+  - 'nsdiag.rules.yml'
+  - 'pachinko.rules.yml'
+  - 'symphony.rules.yml'
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      - '10.175.1.246:9093'
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+# PUSHGATEWAY
+  - job_name: 'pushgateway'
+    scrape_interval: 30s
+    honor_labels: true
+    static_configs:
+      - targets: [ 'prometheus1.lvs.nimblestorage.com:9091' ]
+
+  # The job name is added as a label `job=<job_name>` to any timeseries scraped from this config.
+  - job_name: 'prometheus'
+    scrape_interval: 15s
+    static_configs:
+      - targets: [ 'prometheus1.lvs.nimblestorage.com:9100', 'prometheus1.lvs.nimblestorage.com:9090', 'prometheus2.lvs.nimblestorage.com:9100', 'prometheus2.lvs.nimblestorage.com:9090', 'prometheus3.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'prometheus'
+
+# Mtail Exporter
+  - job_name: 'mtail_exporter'
+    scrape_interval: 15s
+    static_configs:
+      - targets: [ 'lnx-radius.nimblestorage.com:3903' ]
+        labels:
+          noderole: 'a10'
+      - targets: [ 'portaldb2.lvs.nimblestorage.com:3903' ]
+        labels:
+          noderole: 'sfdc'
+          environment: 'production'
+      - targets: [ 'portaldb1.beta.nimblestorage.com:3903' ]
+        labels:
+          noderole: 'sfdc'
+          environment: 'beta'
+ 
+# JMX exportor
+  - job_name: 'kafka_exporter'
+    scrape_interval: 15s
+    static_configs:
+## Production Kafka JMX monitoring
+      - targets: [ 'messagebroker1.lvs.nimblestorage.com:7071', 'messagebroker2.lvs.nimblestorage.com:7071', 'messagebroker3.lvs.nimblestorage.com:7071', 'messagebroker1.lvs.nimblestorage.com:7072', 'messagebroker2.lvs.nimblestorage.com:7072', 'messagebroker3.lvs.nimblestorage.com:7072']
+        labels:
+          noderole: 'messagebroker'
+          environment: 'production'
+          pod: 'na0'
+
+# CA Advisor stats
+  - job_name: 'caadviser'
+    scrape_interval: 15s
+    static_configs:
+      - targets: [ 'prometheus1.lvs.nimblestorage.com:8080', 'prometheus2.lvs.nimblestorage.com:8080', 'prometheus3.lvs.nimblestorage.com:8080' ]
+      # IAM DB BETA
+      - targets: [ 'iamdb1.beta.nimblestorage.com:8080' ]
+        labels:
+          environment: 'beta'
+      # IAM DB PROD
+      - targets: [ 'iamdb1.lvs.nimblestorage.com:8080' ]
+        labels:
+          environment: 'production'
+
+  - job_name: 'node_exporter'
+    static_configs:
+# SUPPORTDB 
+      - targets: [ 'ln-rbagg.dev.nimblestorage.com:9100', 'sjc-is-availmon.nimblestorage.com:9100', 'malibu.nimblestorage.com:9100', 'karl.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'boss'
+          environment: 'production'
+
+# BETA
+#### BETA SERVERS 
+      - targets: [ 'web1.beta.nimblestorage.com:9100', 'web2.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'beta'
+          pod: 'na0'
+
+      - targets: [ 'na1-web1.beta.nimblestorage.com:9100', 'na1-web2.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'beta'
+          pod: 'na1'
+
+      - targets: [ 'na2-web1.beta.nimblestorage.com:9100', 'na2-web2.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'beta'
+          pod: 'na2'
+
+      - targets: [ 'na3-web1.beta.nimblestorage.com:9100', 'na3-web2.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'beta'
+          pod: 'na3'
+
+      - targets: [ 'na4-web1.beta.nimblestorage.com:9100', 'na4-web2.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'beta'
+          pod: 'na4'
+
+      - targets: [ 'na5-web1.beta.nimblestorage.com:9100', 'na5-web2.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'beta'
+          pod: 'na5'
+
+      - targets: [ 'tp1-web1.beta.nimblestorage.com:9100', 'tp1-web2.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'beta'
+          pod: 'tp1'
+
+      - targets: [ 'iris1.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'iris'
+          environment: 'beta'
+          pod: 'na0'
+
+      - targets: [ 'portaldb1.beta.nimblestorage.com:9100', 'portaldb2.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'beta'
+          pod: 'na0'
+
+      - targets: [ 'iam1.beta.nimblestorage.com:9100', 'iam2.beta.nimblestorage.com:9100',  'iamdb1.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'iam'
+          environment: 'beta'
+          pod: 'na0'
+
+      - targets: [ 'search-content1.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'searchcontent'
+          environment: 'beta'
+          pod: 'na0'
+
+      - targets: [ 'shinypro1.beta.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'shinypro'
+          environment: 'beta'
+          pod: 'na0'
+
+#     fatal: [nas1.beta.nimblestorage.com]: libselinux-python missing
+#     fatal: [pachinkodb1.beta.nimblestorage.com]: libselinux-python missing
+
+#### sjc SERVERS #####
+      - targets: [ 'nsdiag1.sjc.nimblestorage.com:9100', 'nsdiag2.sjc.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'nsdiag'
+          environment: 'production'
+          pod: 'na0'
+      - targets: [ 'messagebroker1.sjc.nimblestorage.com:9100', 'messagebroker2.sjc.nimblestorage.com:9100', 'messagebroker3.sjc.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'messagebroker'
+          environment: 'production'
+          pod: 'na0'
+      - targets: [ 'portaldb1.sjc.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'production'
+          pod: 'na0'
+
+##### FASTTRACK #######
+      - targets: [ 'fasttrack1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'standalone'
+          environment: 'production'
+          pod: 'na0'
+
+###### PRODUCTION SERVERS #########
+# ASUPDIAG SERVERS
+      - targets: [ 'asupdiag1.lvs.nimblestorage.com:9100', 'asupdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdiag'
+          environment: 'production'
+          pod: 'na0'
+      - targets: [ 'na1-asupdiag1.lvs.nimblestorage.com:9100', 'na1-asupdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdiag'
+          environment: 'production'
+          pod: 'na1'
+      - targets: [ 'na2-asupdiag1.lvs.nimblestorage.com:9100', 'na2-asupdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdiag'
+          environment: 'production'
+          pod: 'na2'
+      - targets: [ 'na3-asupdiag1.lvs.nimblestorage.com:9100', 'na3-asupdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdiag'
+          environment: 'production'
+          pod: 'na3'
+      - targets: [ 'na4-asupdiag1.lvs.nimblestorage.com:9100', 'na4-asupdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdiag'
+          environment: 'production'
+          pod: 'na4'
+      - targets: [ 'na5-asupdiag1.lvs.nimblestorage.com:9100', 'na5-asupdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdiag'
+          environment: 'production'
+          pod: 'na5'
+      - targets: [ 'na6-asupdiag1.lvs.nimblestorage.com:9100', 'na6-asupdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdiag'
+          environment: 'production'
+          pod: 'na6'
+# MESSAGEBROKER SERVERS
+      - targets: [ 'messagebroker1.lvs.nimblestorage.com:9100', 'messagebroker2.lvs.nimblestorage.com:9100', 'messagebroker3.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'messagebroker'
+          environment: 'production'
+          pod: 'na0'
+      - targets: [ 'na6-messagebroker1.lvs.nimblestorage.com:9100', 'na6-messagebroker2.lvs.nimblestorage.com:9100', 'na6-messagebroker3.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'messagebroker'
+          environment: 'production'
+          pod: 'na6'
+# NFS SERVERS
+      - targets: [ 'nas-asup-lnk.lvs.nimblestorage.com:9100', 'nas1.lvs.nimblestorage.com:9100', 'nas2.lvs.nimblestorage.com:9100', 'nas3.lvs.nimblestorage.com:9100', 'nas-asup1.lvs.nimblestorage.com:9100', 'nas-asup2.lvs.nimblestorage.com:9100', 'nas-asup3.lvs.nimblestorage.com:9100', 'nas-asup4.lvs.nimblestorage.com:9100', 'nas-tpasup1.lvs.nimblestorage.com:9100', 'na1-nas1.lvs.nimblestorage.com:9100', 'na2-nas1.lvs.nimblestorage.com:9100', 'na3-nas1.lvs.nimblestorage.com:9100', 'na4-nas1.lvs.nimblestorage.com:9100', 'na5-nas1.lvs.nimblestorage.com:9100', 'na6-nas1.lvs.nimblestorage.com:9100','sjc-isnas-01.nimblestorage.com:9100', 'sjc-isnas-02.nimblestorage.com:9100']
+        labels:
+          noderole: 'nfs'
+          environment: 'production'
+
+# NSDIAG SERVERS
+      - targets: [ 'nsdiag1.lvs.nimblestorage.com:9100', 'nsdiag2.lvs.nimblestorage.com:9100', 'nsdiag3.lvs.nimblestorage.com:9100', 'nsdiag4.lvs.nimblestorage.com:9100', 'nsdiag5.lvs.nimblestorage.com:9100', 'nsdiag6.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'nsdiag'
+          environment: 'production'
+          pod: 'na0'
+      - targets: [ 'na1-nsdiag1.lvs.nimblestorage.com:9100', 'na1-nsdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'nsdiag'
+          environment: 'production'
+          pod: 'na1'
+      - targets: [ 'na2-nsdiag1.lvs.nimblestorage.com:9100', 'na2-nsdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'nsdiag'
+          environment: 'production'
+          pod: 'na2'
+      - targets: [ 'na3-nsdiag1.lvs.nimblestorage.com:9100', 'na3-nsdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'nsdiag'
+          environment: 'production'
+          pod: 'na3'
+      - targets: [ 'na4-nsdiag1.lvs.nimblestorage.com:9100', 'na4-nsdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'nsdiag'
+          environment: 'production'
+          pod: 'na4'
+      - targets: [ 'na5-nsdiag1.lvs.nimblestorage.com:9100', 'na5-nsdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'nsdiag'
+          environment: 'production'
+          pod: 'na5'
+      - targets: [ 'na6-nsdiag1.lvs.nimblestorage.com:9100', 'na6-nsdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'nsdiag'
+          environment: 'production'
+          pod: 'na6'
+      - targets: [ 'tp1-nsdiag1.lvs.nimblestorage.com:9100', 'tp1-nsdiag2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'nsdiag'
+          environment: 'production'
+          pod: 'tp1'
+# PACHINKO SERVERS
+      - targets: [ 'pachinko1.lvs.nimblestorage.com:9100', 'pachinko2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'pachinko'
+          environment: 'production'
+          pod: 'na0'
+      - targets: [ 'na1-pachinko1.lvs.nimblestorage.com:9100', 'na1-pachinko2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'pachinko'
+          environment: 'production'
+          pod: 'na1'
+      - targets: [ 'na2-pachinko1.lvs.nimblestorage.com:9100', 'na2-pachinko2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'pachinko'
+          environment: 'production'
+          pod: 'na2'
+      - targets: [ 'na3-pachinko1.lvs.nimblestorage.com:9100', 'na3-pachinko2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'pachinko'
+          environment: 'production'
+          pod: 'na3'
+      - targets: [ 'na4-pachinko1.lvs.nimblestorage.com:9100', 'na4-pachinko2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'pachinko'
+          environment: 'production'
+          pod: 'na4'
+      - targets: [ 'na5-pachinko1.lvs.nimblestorage.com:9100', 'na5-pachinko2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'pachinko'
+          environment: 'production'
+          pod: 'na5'
+      - targets: [ 'na6-pachinko1.lvs.nimblestorage.com:9100', 'na6-pachinko2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'pachinko'
+          environment: 'production'
+          pod: 'na6'
+# PACHINKODB SERVERS
+      - targets: [ 'pachinkodb1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'pachinkodb'
+          environment: 'production'
+          pod: 'na0'
+# PORTALDB SERVERS
+      - targets: [ 'portaldb1.lvs.nimblestorage.com:9100', 'portaldb2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'production'
+          pod: 'na0'
+      - targets: [ 'na1-portaldb1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'production'
+          pod: 'na1'
+      - targets: [ 'na2-portaldb1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'production'
+          pod: 'na2'
+      - targets: [ 'na3-portaldb1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'production'
+          pod: 'na3'
+      - targets: [ 'na4-portaldb1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'production'
+          pod: 'na4'
+      - targets: [ 'na5-portaldb1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'production'
+          pod: 'na5'
+      - targets: [ 'na6-portaldb1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'production'
+          pod: 'na6'
+      - targets: [ 'tp1-portaldb1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'portaldb'
+          environment: 'production'
+          pod: 'tp1'
+# SHINY SERVER
+      - targets: [ 'shinypro1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'shiny'
+          environment: 'production'
+          pod: 'na0'
+# VOLT DB SERVERS INSTALLBASE
+      - targets: [ 'streamdb1.lvs.nimblestorage.com:9100', 'streamdb2.lvs.nimblestorage.com:9100', 'streamdb3.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'voltdb'
+          environment: 'production'
+          pod: 'na0'
+# VERTICA SERVERS
+      - targets: [ 'vertica1.lvs.nimblestorage.com:9100', 'vertica2.lvs.nimblestorage.com:9100', 'vertica3.lvs.nimblestorage.com:9100', 'vertica4.lvs.nimblestorage.com:9100', 'vertica5.lvs.nimblestorage.com:9100', 'vertica6.lvs.nimblestorage.com:9100', 'vertica7.lvs.nimblestorage.com:9100', 'vertica8.lvs.nimblestorage.com:9100', 'vertica9.lvs.nimblestorage.com:9100', 'vertica10.lvs.nimblestorage.com:9100', 'vertica11.lvs.nimblestorage.com:9100', 'vertica12.lvs.nimblestorage.com:9100', 'vertica13.lvs.nimblestorage.com:9100', 'vertica14.lvs.nimblestorage.com:9100', 'vertica15.lvs.nimblestorage.com:9100', 'vertica16.lvs.nimblestorage.com:9100'  ]
+        labels:
+          noderole: 'asupdb'
+          environment: 'production'
+          pod: 'na0'
+      - targets: [ 'na1-vertica1.lvs.nimblestorage.com:9100', 'na1-vertica2.lvs.nimblestorage.com:9100', 'na1-vertica3.lvs.nimblestorage.com:9100', 'na1-vertica4.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdb'
+          environment: 'production'
+          pod: 'na1'
+      - targets: [ 'na2-vertica1.lvs.nimblestorage.com:9100', 'na2-vertica2.lvs.nimblestorage.com:9100', 'na2-vertica3.lvs.nimblestorage.com:9100', 'na2-vertica4.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdb'
+          environment: 'production'
+          pod: 'na2'
+      - targets: [ 'na3-vertica1.lvs.nimblestorage.com:9100', 'na3-vertica2.lvs.nimblestorage.com:9100', 'na3-vertica3.lvs.nimblestorage.com:9100', 'na3-vertica4.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdb'
+          environment: 'production'
+          pod: 'na3'
+      - targets: [ 'na4-vertica1.lvs.nimblestorage.com:9100', 'na4-vertica2.lvs.nimblestorage.com:9100', 'na4-vertica3.lvs.nimblestorage.com:9100', 'na4-vertica4.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdb'
+          environment: 'production'
+          pod: 'na4'
+      - targets: [ 'na5-vertica1.lvs.nimblestorage.com:9100', 'na5-vertica2.lvs.nimblestorage.com:9100', 'na5-vertica3.lvs.nimblestorage.com:9100', 'na5-vertica4.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdb'
+          environment: 'production'
+          pod: 'na5'
+#      - targets: [ 'na6-vertica1.lvs.nimblestorage.com:9100', 'na6-vertica2.lvs.nimblestorage.com:9100', 'na6-vertica3.lvs.nimblestorage.com:9100', 'na6-vertica4.lvs.nimblestorage.com:9100' ]
+#        labels:
+#          noderole: 'asupdb'
+#          environment: 'production'
+#          pod: 'na6'
+      - targets: [ 'tp1-vertica1.lvs.nimblestorage.com:9100', 'tp1-vertica2.lvs.nimblestorage.com:9100', 'tp1-vertica3.lvs.nimblestorage.com:9100', 'tp1-vertica4.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdb'
+          environment: 'production'
+          pod: 'tp1'
+
+# WEB SERVERS
+      - targets: [ 'web1.lvs.nimblestorage.com:9100', 'web2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'production'
+          pod: 'na0'
+      - targets: [ 'na1-web1.lvs.nimblestorage.com:9100', 'na1-web2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'production'
+          pod: 'na1'
+      - targets: [ 'na2-web1.lvs.nimblestorage.com:9100', 'na2-web2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'production'
+          pod: 'na2'
+      - targets: [ 'na3-web1.lvs.nimblestorage.com:9100', 'na3-web2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'production'
+          pod: 'na3'
+      - targets: [ 'na4-web1.lvs.nimblestorage.com:9100', 'na4-web2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'production'
+          pod: 'na4'
+      - targets: [ 'na5-web1.lvs.nimblestorage.com:9100', 'na5-web2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'production'
+          pod: 'na5'
+      - targets: [ 'na6-web1.lvs.nimblestorage.com:9100', 'na6-web2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'production'
+          pod: 'na6'
+      - targets: [ 'tp1-web1.lvs.nimblestorage.com:9100', 'tp1-web2.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'production'
+          pod: 'tp1'
+
+# IAM SERVERS
+      - targets: [ 'iam1.lvs.nimblestorage.com:9100', 'iam2.lvs.nimblestorage.com:9100', 'iamdb1.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'iam'
+          environment: 'production'
+          pod: 'na0'
+
+# ALPHA WEB SERVERS
+      - targets: [ 'web1.infosight-alpha.nimblestorage.com:9100', 'web2.infosight-alpha.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'alpha'
+          pod: 'na0'
+      - targets: [ 'na1-web1.infosight-alpha.nimblestorage.com:9100', 'na1-web2.infosight-alpha.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'alpha'
+          pod: 'na1'
+      - targets: [ 'na2-web1.infosight-alpha.nimblestorage.com:9100', 'na2-web2.infosight-alpha.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'alpha'
+          pod: 'na2'
+      - targets: [ 'na3-web1.infosight-alpha.nimblestorage.com:9100', 'na3-web2.infosight-alpha.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'alpha'
+          pod: 'na3'
+      - targets: [ 'na4-web1.infosight-alpha.nimblestorage.com:9100', 'na4-web2.infosight-alpha.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'alpha'
+          pod: 'na4'
+      - targets: [ 'na5-web1.infosight-alpha.nimblestorage.com:9100', 'na5-web2.infosight-alpha.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'web'
+          environment: 'alpha'
+          pod: 'na5'
+
+# SYMPHONY PRE-PROD VERTICA SERVERS
+      - targets: [ 'mesosagent5.lvs.nimblestorage.com:9100', 'mesosagent6.lvs.nimblestorage.com:9100', 'mesosagent7.lvs.nimblestorage.com:9100', 'mesosagent8.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'asupdb'
+          environment: 'production'
+
+# SYMPHONY DC/OS MESOS PRIVATE AGENTS
+      - targets: [ 'mesosagent1.lvs.nimblestorage.com:9100', 'mesosagent2.lvs.nimblestorage.com:9100', 'mesosagent3.lvs.nimblestorage.com:9100', 'mesosagent4.lvs.nimblestorage.com:9100', 'mesosagent9.lvs.nimblestorage.com:9100', 'mesosagent10.lvs.nimblestorage.com:9100', 'mesosagent11.lvs.nimblestorage.com:9100', 'mesosagent12.lvs.nimblestorage.com:9100', 'mesosagent13.lvs.nimblestorage.com:9100', 'mesosagent14.lvs.nimblestorage.com:9100', 'mesosagent15.lvs.nimblestorage.com:9100', 'mesosagent16.lvs.nimblestorage.com:9100', 'mesosagent17.lvs.nimblestorage.com:9100', 'mesosagent18.lvs.nimblestorage.com:9100', 'mesosagent19.lvs.nimblestorage.com:9100', 'mesosagent20.lvs.nimblestorage.com:9100', 'mesosagent21.lvs.nimblestorage.com:9100', 'mesosagent22.lvs.nimblestorage.com:9100', 'mesosagent23.lvs.nimblestorage.com:9100', 'mesosagent24.lvs.nimblestorage.com:9100', 'mesosagent25.lvs.nimblestorage.com:9100', 'mesosagent26.lvs.nimblestorage.com:9100', 'mesosagent27.lvs.nimblestorage.com:9100', 'mesosagent28.lvs.nimblestorage.com:9100', 'mesosagent29.lvs.nimblestorage.com:9100', 'mesosagent30.lvs.nimblestorage.com:9100', 'mesosagent31.lvs.nimblestorage.com:9100', 'mesosagent32.lvs.nimblestorage.com:9100', 'mesosagent33.lvs.nimblestorage.com:9100', 'mesosagent34.lvs.nimblestorage.com:9100', 'mesosagent35.lvs.nimblestorage.com:9100', 'mesosagent36.lvs.nimblestorage.com:9100', 'mesosagent37.lvs.nimblestorage.com:9100', 'mesosagent38.lvs.nimblestorage.com:9100', 'mesosagent39.lvs.nimblestorage.com:9100', 'mesosagent40.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'mesosagent'
+          environment: 'production'
+
+# SYMPHONY DC/OS MESOS PUBLIC AGENTS
+      - targets: [ 'mesospublic1.lvs.nimblestorage.com:9100', 'mesospublic2.lvs.nimblestorage.com:9100', 'mesospublic3.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'mesospublic'
+          environment: 'production'
+
+# SYMPHONY DC/OS MESOS MASTERS
+      - targets: [ 'mesosmaster1.lvs.nimblestorage.com:9100', 'mesosmaster2.lvs.nimblestorage.com:9100', 'mesosmaster3.lvs.nimblestorage.com:9100' ]
+        labels:
+          noderole: 'mesosmaster'
+          environment: 'production'
+
+# SYMPHONY MONITOR DCOS NODE
+      - targets: [ 'monitor1.lvs.nimblestorage.com:9100']
+        labels:
+          noderole: 'monitor'
+          environment: 'production'
+
